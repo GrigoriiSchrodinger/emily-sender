@@ -1,9 +1,10 @@
-from typing import Optional
+from typing import Optional, Tuple, Any
 
 import requests
 from pydantic import BaseModel, ValidationError
 
-from src.feature.request.schemas import DeletePostByQueue, GetNewsMaxValueResponse
+from src.feature.request.schemas import DeletePostByQueue, PostSendNewsList, PostQueueList, DetailBySeedResponse, \
+    DetailBySeed
 from src.logger import logger
 
 
@@ -131,11 +132,28 @@ class RequestHandler:
         self.timeout = timeout
 
 class RequestDataBase(RequestHandler):
-    def get_max_rate_news(self) -> Optional[GetNewsMaxValueResponse]:
-        status_code, data = self.__get__(endpoint="rate-max-value")
-        if status_code == 203:
-            return None
-        return data
+    def __get_last_send_news__(self) -> [int, PostSendNewsList]:
+        return self.__get__(endpoint='send-news', response_model=PostSendNewsList)
+
+    def __get_last_queue__(self) -> [int, PostQueueList]:
+        return self.__get__(endpoint='queue', response_model=PostQueueList)
+
+    def __get_detail_by_seed__(self, seed: str) -> tuple[int, str | Any] | tuple[None, None]:
+        seed_req = DetailBySeed(
+            seed=seed
+        )
+        return self.__get__(endpoint='detail-by-seed/{seed}', path_params=seed_req, response_model=DetailBySeedResponse)
+
+    def get_detail_by_seed(self, seed: str) -> DetailBySeedResponse:
+        return self.__get_detail_by_seed__(seed=seed)[1]
+
+    def get_last_news_queue(self) -> PostQueueList:
+        queue = self.__get_last_queue__()
+        return queue[1]
+
+    def get_last_news_send(self) -> PostSendNewsList:
+        queue = self.__get_last_send_news__()
+        return queue[1]
 
     def delete_news_by_queue(self, channel: str, id_post: int):
         path_params = DeletePostByQueue(

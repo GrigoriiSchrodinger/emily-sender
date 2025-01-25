@@ -30,6 +30,8 @@ class DetailBySeedResponse(PostBase):
     channel: str
     id_post: int
     outlinks: list[str]
+    new_content: str | None
+    media_resolution: bool
 
 class GetNewsMaxValueResponse(PostBase):
     channel: str

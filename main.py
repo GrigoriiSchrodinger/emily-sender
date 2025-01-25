@@ -44,11 +44,13 @@ def main():
 
         if seed and seed not in last_news_send_seeds and seed in last_news_queue_seeds:
             detail_by_seed = request_db.get_detail_by_seed(seed)
+            print(detail_by_seed)
             detail_by_seed_json = {
                 "content": detail_by_seed.content,
                 "channel": detail_by_seed.channel,
                 "id_post": detail_by_seed.id_post,
-                "outlinks": detail_by_seed.outlinks
+                "outlinks": detail_by_seed.outlinks,
+                "seed": seed
             }
             redis.send_to_queue(queue_name="text_conversion", data=json.dumps(detail_by_seed_json))
             request_db.delete_news_by_queue(channel=detail_by_seed.channel, id_post=detail_by_seed.id_post)

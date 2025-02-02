@@ -9,7 +9,7 @@ from src.logger import logger
 
 
 class RequestHandler:
-    def __init__(self, base_url="http://0.0.0.0:8000/news", headers=None, timeout=10):
+    def __init__(self, base_url="http://0.0.0.0:8000/", headers=None, timeout=10):
         """
         Инициализация класса для работы с запросами.
 
@@ -42,6 +42,7 @@ class RequestHandler:
         url = f"{self.base_url}/{endpoint}"
 
         try:
+            logger.debug(f"Начало GET запроса: {endpoint}")
             # Преобразуем параметры запроса в словарь
             logger.debug(f"Делаем get запрос - {url}, data - {query_params}")
             query_params_dict = query_params.dict() if query_params else None
@@ -51,6 +52,7 @@ class RequestHandler:
             # Обрабатываем ответ с использованием модели
             data = response.json() if response.headers.get('Content-Type') == 'application/json' else response.text
             logger.debug(f"Ответ - {data}")
+            logger.info(f"Успешный GET: {url} [Status: {response.status_code}]")
             return response.status_code, (response_model.parse_obj(data) if response_model else data)
         except requests.exceptions.RequestException as error:
             logger.exception("Произошла ошибка: %s", error)
@@ -71,6 +73,7 @@ class RequestHandler:
             """
         url = f"{self.base_url}/{endpoint}"
         try:
+            logger.debug(f"Начало POST запроса: {endpoint}")
             logger.debug(f"Делаем post запрос - {url}, data - {data}")
             data_dict = data.model_dump() if data else None
             response = requests.post(url, headers=self.headers, json=data_dict, timeout=self.timeout)
@@ -78,6 +81,7 @@ class RequestHandler:
 
             data = response.json() if response.headers.get('Content-Type') == 'application/json' else response.text
             logger.debug(f"Ответ - {data}")
+            logger.info(f"Успешный POST: {url} [Status: {response.status_code}]")
             return response_model.model_validate(data) if response_model else data
         except requests.exceptions.RequestException as error:
             logger.exception("Произошла ошибка: %s", error)
@@ -101,6 +105,7 @@ class RequestHandler:
         url = f"{self.base_url}/{endpoint}"
 
         try:
+            logger.debug(f"Начало DELETE запроса: {endpoint}")
             logger.debug(f"Делаем delete запрос - {url}, data - {query_params}")
             query_params_dict = query_params.dict() if query_params else None
             response = requests.delete(url, headers=self.headers, params=query_params_dict, timeout=self.timeout)
@@ -108,6 +113,7 @@ class RequestHandler:
 
             data = response.json() if response.headers.get('Content-Type') == 'application/json' else response.text
             logger.debug(f"Ответ - {data}")
+            logger.info(f"Успешный DELETE: {url} [Status: {response.status_code}]")
             return data
         except requests.exceptions.RequestException as error:
             logger.exception("Произошла ошибка: %s", error)
@@ -133,16 +139,16 @@ class RequestHandler:
 
 class RequestDataBase(RequestHandler):
     def __get_last_send_news__(self) -> [int, PostSendNewsList]:
-        return self.__get__(endpoint='send-news', response_model=PostSendNewsList)
+        return self.__get__(endpoint='send-news/get-news/by/hours', response_model=PostSendNewsList)
 
     def __get_last_queue__(self) -> [int, PostQueueList]:
-        return self.__get__(endpoint='queue', response_model=PostQueueList)
+        return self.__get__(endpoint='queue/get-news/by/hours', response_model=PostQueueList)
 
     def __get_detail_by_seed__(self, seed: str) -> tuple[int, str | Any] | tuple[None, None]:
         seed_req = DetailBySeed(
             seed=seed
         )
-        return self.__get__(endpoint='detail-by-seed/{seed}', path_params=seed_req, response_model=DetailBySeedResponse)
+        return self.__get__(endpoint='all-news/detail-by-seed/{seed}', path_params=seed_req, response_model=DetailBySeedResponse)
 
     def get_detail_by_seed(self, seed: str) -> DetailBySeedResponse:
         return self.__get_detail_by_seed__(seed=seed)[1]
@@ -160,4 +166,4 @@ class RequestDataBase(RequestHandler):
             channel=channel,
             id_post=id_post
         )
-        return self.__delete__(endpoint="delete-news-queue/{channel}/{id_post}", path_params=path_params)
+        return self.__delete__(endpoint="queue/delete-news/{channel}/{id_post}", path_params=path_params)

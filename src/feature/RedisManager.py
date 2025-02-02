@@ -1,42 +1,40 @@
-import json
-
 import redis
-
 from src.logger import logger
-
 
 class RedisQueue:
     def __init__(self, host='localhost', port=6379, db=0):
-        """
-        Инициализирует подключение к Redis и имя очереди.
-        """
-        self.redis_conn = redis.Redis(host=host, port=port, db=db)
+        try:
+            self.redis_conn = redis.StrictRedis(host=host, port=port, db=db)
+            self.redis_conn.ping()  # Проверка подключения
+            logger.info(f"Успешное подключение к Redis: {host}:{port} DB:{db}")
+        except redis.RedisError as e:
+            logger.critical(f"Ошибка подключения к Redis: {e}", exc_info=True)
+            raise
 
     def send_to_queue(self, queue_name, data):
-        """
-        Отправляет данные в очередь
-        """
-        # try:
-        logger.debug(f"Отправляем в очередь - {queue_name} | {json.loads(data)}")
-        self.redis_conn.rpush(queue_name, data)
-        # except Exception as error:
-        #     logger.exception("Произошла ошибка: %s", error)
+        try:
+            self.redis_conn.rpush(queue_name, data)
+            logger.debug(f"Отправка в {queue_name}: {data[:200]}...")  # Логируем часть данных
+        except Exception as e:
+            logger.error(f"Ошибка отправки в очередь {queue_name}: {e}", exc_info=True)
+            raise
 
     def receive_from_queue(self, queue_name, block=True, timeout=None):
-        """
-        Получает данные из очереди
-        Если блокировка включена, будет ждать до появления данных.
-        """
-        try:
-            if block:
-                logger.debug(f"Ждем ответа очереди - {queue_name}")
-                item = self.redis_conn.blpop(queue_name, timeout=timeout)
-            else:
-                item = self.redis_conn.lpop(queue_name)
+        if block:
+            return self.redis_conn.blpop(queue_name, timeout=timeout)
+        else:
+            return self.redis_conn.lpop(queue_name)
 
-            if item:
-                logger.debug(f"Получили из очереди - {json.loads(item[1].decode('utf-8'))}")
-                return json.loads(item[1].decode('utf-8'))
-            return None
-        except Exception as error:
-            logger.exception("Произошла ошибка: %s", error)
+    def subscribe_to_channel(self, channel_name, callback):
+        try:
+            pubsub = self.redis_conn.pubsub()
+            pubsub.subscribe(channel_name)
+            logger.info(f"Подписка на канал {channel_name} успешна")
+            
+            for message in pubsub.listen():
+                if message['type'] == 'message':
+                    logger.debug(f"Обработка сообщения из {channel_name}: {message['data'][:200]}...")
+                    callback(message['data'])
+        except Exception as e:
+            logger.critical(f"Ошибка в подписке Redis: {e}", exc_info=True)
+            raise

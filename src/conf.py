@@ -1,9 +1,13 @@
 import os
-
+from dotenv import load_dotenv
 from src.feature.RedisManager import RedisQueue
+
+load_dotenv()
 
 redis = RedisQueue(host="localhost", port=6379, db=0)
 API_KEY = os.getenv('API_KEY')
+MODEL = os.getenv('MODEL')
+BASE_URL = os.getenv('BASE_URL')
 
 def get_promt_choosing_post():
     return """

@@ -1,19 +1,20 @@
 from openai import OpenAI
-from src.conf import API_KEY, get_list_news_choosing_post, get_promt_choosing_post
+from src.conf import API_KEY, get_list_news_choosing_post, get_promt_choosing_post, MODEL, BASE_URL
 from src.logger import logger
 import time
 
 
 class GptAPI:
-    def __init__(self, api_key: str = API_KEY, model: str = "gpt-4o"):
+    def __init__(self, api_key: str = API_KEY, base_url: str = BASE_URL, model: str = MODEL):
         self.client = None
         self.api_key = api_key
         self.model = model
+        self.base_url = base_url
         self.initialize_client()
 
     def initialize_client(self):
         try:
-            self.client = OpenAI(api_key=self.api_key)
+            self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         except Exception as error:
             logger.exception("Произошла ошибка: %s", error)
 
@@ -32,13 +33,11 @@ class GptAPI:
             
             duration = time.time() - start_time
             logger.info(
-                f"GPT запрос выполнен за {duration:.2f}s | "
-                f"Токены: prompt={completion.usage.prompt_tokens} completion={completion.usage.completion_tokens}",
+                f"GPT запрос выполнен за {duration:.2f}s",
                 extra={
                     "duration": duration,
-                    "prompt_tokens": completion.usage.prompt_tokens,
-                    "completion_tokens": completion.usage.completion_tokens,
-                    "gpt_model": self.model
+                    "gpt_model": self.model,
+                    "response": completion
                 }
             )
             return completion.choices[0].message.content

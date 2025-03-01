@@ -4,10 +4,10 @@ from src.feature.RedisManager import RedisQueue
 
 load_dotenv()
 
-redis = RedisQueue(host="localhost", port=6379, db=0)
+redis = RedisQueue(host="redis", port=6379, db=0)
 API_KEY = os.getenv('API_KEY')
-MODEL = os.getenv('MODEL')
-BASE_URL = os.getenv('BASE_URL')
+MODEL = os.getenv('MODEL', "gpt-4o")
+BASE_URL = os.getenv('BASE_URL', "https://api.openai.com/v1")
 
 def get_promt_choosing_post():
     return """

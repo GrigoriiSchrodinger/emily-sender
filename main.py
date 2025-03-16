@@ -4,10 +4,11 @@ import threading
 import datetime
 import pytz
 
-from src.conf import redis
 from src.feature.gpt import GptRequest
 from src.feature.request.RequestHandler import RequestDataBase
 from src.logger import logger
+from src.service import redis
+
 
 def random_seconds():
     min_seconds = 30 * 60

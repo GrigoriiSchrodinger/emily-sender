@@ -6,10 +6,11 @@ from pydantic import BaseModel, ValidationError
 from src.feature.request.schemas import DeletePostByQueue, PostSendNewsList, PostQueueList, DetailBySeedResponse, \
     DetailBySeed
 from src.logger import logger
+from src.service_url import get_url_emily_database_handler
 
 
 class RequestHandler:
-    def __init__(self, base_url="http://emily-database-handler:8000/", headers=None, timeout=10):
+    def __init__(self, base_url=get_url_emily_database_handler(), headers=None, timeout=10):
         """
         Инициализация класса для работы с запросами.
 

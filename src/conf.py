@@ -1,4 +1,5 @@
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -7,6 +8,7 @@ API_KEY = os.getenv('API_KEY')
 MODEL = os.getenv('MODEL', "gpt-4o")
 BASE_URL = os.getenv('BASE_URL', "https://api.openai.com/v1")
 ENV = os.getenv('ENV', "localhost")
+
 
 def get_promt_choosing_post():
     return """
@@ -38,6 +40,7 @@ def get_promt_choosing_post():
     3. Перед отправкой проверь что ты выбрала правильный seed и он не отличается, от того который ты хочешь отправить
 • Ожидания: Ты должен вернуть ТОЛЬКО seed и больше ничего, выбранной новости: пример - "3dfa12dffdfasdfa" 
 """
+
 
 def get_list_news_choosing_post():
     return """

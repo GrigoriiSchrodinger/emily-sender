@@ -138,6 +138,7 @@ class RequestHandler:
         """
         self.timeout = timeout
 
+
 class RequestDataBase(RequestHandler):
     def __get_last_send_news__(self) -> [int, PostSendNewsList]:
         return self.__get__(endpoint='send-news/get-news/by/hours', response_model=PostSendNewsList)
@@ -149,7 +150,8 @@ class RequestDataBase(RequestHandler):
         seed_req = DetailBySeed(
             seed=seed
         )
-        return self.__get__(endpoint='all-news/detail-by-seed/{seed}', path_params=seed_req, response_model=DetailBySeedResponse)
+        return self.__get__(endpoint='all-news/detail-by-seed/{seed}', path_params=seed_req,
+                            response_model=DetailBySeedResponse)
 
     def get_detail_by_seed(self, seed: str) -> DetailBySeedResponse:
         return self.__get_detail_by_seed__(seed=seed)[1]

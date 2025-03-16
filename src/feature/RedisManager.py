@@ -1,4 +1,5 @@
 import redis
+
 from src.logger import logger
 from src.service_url import get_url_redis
 
@@ -32,7 +33,7 @@ class RedisQueue:
             pubsub = self.redis_conn.pubsub()
             pubsub.subscribe(channel_name)
             logger.info(f"Подписка на канал {channel_name} успешна")
-            
+
             for message in pubsub.listen():
                 if message['type'] == 'message':
                     logger.debug(f"Обработка сообщения из {channel_name}: {message['data'][:200]}...")

@@ -1,7 +1,8 @@
+import datetime
 import json
 import random
 import threading
-import datetime
+
 import pytz
 
 from src.feature.gpt import GptRequest
@@ -42,6 +43,7 @@ def format_news(data_send: dict, data_queue: dict) -> str:
     ]
 
     return '\n'.join(result_send + result_queue)
+
 
 def main():
     request_db = RequestDataBase()
@@ -94,6 +96,7 @@ def main():
         else:
             logger.error("Все попытки завершились неудачно")
 
+
 def run_main(timer_event):
     while True:
         if not timer_event.wait(timeout=random_seconds()):
@@ -104,6 +107,7 @@ def run_main(timer_event):
             else:
                 logger.debug(f"Московское время {moscow_time.strftime('%H:%M')} вне рабочего диапазона")
 
+
 def message_callback(data):
     logger.info(f"Получено сообщение из очереди: {data.decode()}")
     try:
@@ -113,6 +117,7 @@ def message_callback(data):
     finally:
         timer_event.set()
         timer_event.clear()
+
 
 if __name__ == '__main__':
     logger.info("Start work")

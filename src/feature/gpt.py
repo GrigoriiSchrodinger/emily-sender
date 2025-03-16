@@ -1,7 +1,9 @@
+import time
+
 from openai import OpenAI
+
 from src.conf import API_KEY, get_list_news_choosing_post, get_promt_choosing_post, MODEL, BASE_URL
 from src.logger import logger
-import time
 
 
 class GptAPI:
@@ -22,7 +24,7 @@ class GptAPI:
         try:
             start_time = time.time()
             logger.debug(f"Начало GPT запроса: {prompt[:100]}...")
-            
+
             completion = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -30,7 +32,7 @@ class GptAPI:
                     {"role": "user", "content": user_message}
                 ]
             )
-            
+
             duration = time.time() - start_time
             logger.info(
                 f"GPT запрос выполнен за {duration:.2f}s",

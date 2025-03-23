@@ -5,10 +5,8 @@ import threading
 
 import pytz
 
-from src.feature.gpt import GptRequest
-from src.feature.request.RequestHandler import RequestDataBase
 from src.logger import logger
-from src.service import redis
+from src.service import redis, request_db, gpt_handler
 
 
 def random_seconds():
@@ -17,12 +15,12 @@ def random_seconds():
     return random.randint(min_seconds, max_seconds)
 
 
-def format_news(data_send: dict, data_queue: dict) -> str:
+def format_news(data_send: dict, data_queue: dict) -> tuple[str, str]:
     """
     Форматирует список отправленных новостей в текстовый вид
     """
 
-    def format_entry(index: int, item) -> str:  # Тип item изменен на объект
+    def format_entry(index: int, item) -> str:
         # Используем прямое обращение к атрибутам объекта
         created_at = item.created_at.strftime("%Y-%m-%d %H:%M:%S")
         return (
@@ -32,31 +30,27 @@ def format_news(data_send: dict, data_queue: dict) -> str:
         )
 
     # Обрабатываем объекты из send и queue
-    result_send = ["Список уже отправленных новостей:"] + [
+    result_send = '\n'.join([
         format_entry(i, item)
         for i, item in enumerate(getattr(data_send, 'send', []), 1)
-    ]
+    ])
 
-    result_queue = ["Список новостей в очереди:"] + [
+    result_queue ='\n'.join([
         format_entry(i, item)
         for i, item in enumerate(getattr(data_queue, 'queue', []), 1)
-    ]
+    ])
 
-    return '\n'.join(result_send + result_queue)
+    return result_send, result_queue
 
 
 def main():
-    request_db = RequestDataBase()
-    gpt = GptRequest()
     logger.info("Начало обработки main()")
-
     last_news_queue = request_db.get_last_news_queue()
     last_news_send = request_db.get_last_news_send()
     logger.debug(f"Получено из очереди ожидания: {len(last_news_queue.queue)}")
     logger.debug(f"Получено из отправленных: {len(last_news_send.send)}")
 
-    list_news = format_news(data_send=last_news_send, data_queue=last_news_queue)
-
+    send_news_list, queue_news_list  = format_news(data_send=last_news_send, data_queue=last_news_queue)
     last_news_send_seeds = {news.seed for news in last_news_send.send}
     last_news_queue_seeds = {news.seed for news in last_news_queue.queue}
 
@@ -64,7 +58,8 @@ def main():
     if last_news_queue:
         while attempts < 3:
             logger.debug(f"Попытка #{attempts + 1} выбора поста")
-            post = gpt.choosing_post(list_news=list_news)
+            # post = gpt.choosing_post(list_news=list_news)
+            post = gpt_handler.select_best_news(send_news_list=send_news_list, queue_news_list=queue_news_list)
 
             if not post:
                 logger.warning("GPT не вернул пост")

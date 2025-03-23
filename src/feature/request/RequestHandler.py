@@ -4,9 +4,9 @@ import requests
 from pydantic import BaseModel, ValidationError
 
 from src.feature.request.schemas import DeletePostByQueue, PostSendNewsList, PostQueueList, DetailBySeedResponse, \
-    DetailBySeed
+    DetailBySeed, SelectBestNews, SelectBestNewsResponse
 from src.logger import logger
-from src.service_url import get_url_emily_database_handler
+from src.service_url import get_url_emily_database_handler, get_url_emily_gpt_handler
 
 
 class RequestHandler:
@@ -170,3 +170,24 @@ class RequestDataBase(RequestHandler):
             id_post=id_post
         )
         return self.__delete__(endpoint="queue/delete-news/{channel}/{id_post}", path_params=path_params)
+
+class RequestGptHandler(RequestHandler):
+    def __init__(self, base_url=get_url_emily_gpt_handler(), timeout=120):
+        super().__init__(base_url=base_url, timeout=timeout)
+
+    def __select_best_news__(self, data: SelectBestNews) -> SelectBestNewsResponse:
+        return self.__post__(endpoint='text-handler/select-best-news', data=data)
+
+    def select_best_news(self, send_news_list: str, queue_news_list: str) -> str:
+        """
+        Ручка возвращает seed лучший новости из списка очереди
+
+        :param send_news_list: Список отправленных новостей.
+        :param queue_news_list: Список очереди новостей.
+        :return: Ответ seed выбранной новости
+        """
+        data = SelectBestNews(
+            send_news_list=send_news_list,
+            queue_news_list=queue_news_list
+        )
+        return self.__select_best_news__(data=data)["seed"]

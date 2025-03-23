@@ -46,7 +46,13 @@ class GetNewsMaxValueResponse(PostBase):
     id_post: int
     outlinks: list[str]
 
-
 class DeletePostByQueue(PostBase):
     channel: str
     id_post: int
+
+class SelectBestNews(PostBase):
+    send_news_list: str
+    queue_news_list: str
+
+class SelectBestNewsResponse(PostBase):
+    seed: str

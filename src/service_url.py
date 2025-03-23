@@ -13,12 +13,14 @@ SERVICE_URLS: Dict[str, Dict[str, str]] = {
     Environment.LOCALHOST: {
         "emily_database_handler": "http://localhost:8000",
         "redis": "localhost",
-        "loki": "http://localhost:3100"
+        "loki": "http://localhost:3100",
+        "emily_gpt_handler": "http://localhost:8100",
     },
     Environment.PRODUCTION: {
         "emily_database_handler": "http://emily-database-handler:8000",
         "redis": "redis",
-        "loki": "http://loki:3100"
+        "loki": "http://loki:3100",
+        "emily_gpt_handler": "http://emily-gpt-handler:8100",
     }
 }
 
@@ -55,3 +57,7 @@ def get_url_redis() -> str:
 def get_url_loki() -> str:
     """Возвращает URL для сервиса loki."""
     return get_service_url("loki") or SERVICE_URLS[Environment.LOCALHOST]["loki"]
+
+def get_url_emily_gpt_handler() -> str:
+    """Возвращает URL для сервиса emily-gpt-handler."""
+    return get_service_url("emily_gpt_handler") or SERVICE_URLS[Environment.LOCALHOST]["emily_gpt_handler"]

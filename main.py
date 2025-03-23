@@ -19,27 +19,25 @@ def format_news(data_send: dict, data_queue: dict) -> tuple[str, str]:
     """
     Форматирует список отправленных новостей в текстовый вид
     """
-
-    def format_entry(index: int, item) -> str:
+    def format_entry(index: int, item, time_label: str) -> str:
         # Используем прямое обращение к атрибутам объекта
         created_at = item.created_at.strftime("%Y-%m-%d %H:%M:%S")
         return (
             f"{index}) seed - '{item.seed}'\n"
             f"текст  - \"{item.text}\"\n"
-            f"Время появление новости - \"{created_at}\"\n"
+            f"{time_label} - \"{created_at}\"\n"
         )
 
     # Обрабатываем объекты из send и queue
     result_send = '\n'.join([
-        format_entry(i, item)
+        format_entry(i, item, "Время отправки новости")
         for i, item in enumerate(getattr(data_send, 'send', []), 1)
     ])
 
-    result_queue ='\n'.join([
-        format_entry(i, item)
+    result_queue = '\n'.join([
+        format_entry(i, item, "Время создания новости")
         for i, item in enumerate(getattr(data_queue, 'queue', []), 1)
     ])
-
     return result_send, result_queue
 
 

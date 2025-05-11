@@ -4,7 +4,7 @@ import requests
 from pydantic import BaseModel, ValidationError
 
 from src.feature.request.schemas import DeletePostByQueue, PostSendNewsList, PostQueueList, DetailBySeedResponse, \
-    DetailBySeed, SelectBestNews, SelectBestNewsResponse
+    DetailBySeed, SelectBestNews, SelectBestNewsResponse, SelectBestNewsList
 from src.logger import logger
 from src.service_url import get_url_emily_database_handler, get_url_emily_gpt_handler
 
@@ -178,7 +178,7 @@ class RequestGptHandler(RequestHandler):
     def __select_best_news__(self, data: SelectBestNews) -> SelectBestNewsResponse:
         return self.__post__(endpoint='text-handler/select-best-news', data=data)
 
-    def select_best_news(self, send_news_list: str, queue_news_list: str) -> str:
+    def select_best_news(self, send_news_list: list[SelectBestNewsList], queue_news_list: list[SelectBestNewsList]) -> str:
         """
         Ручка возвращает seed лучший новости из списка очереди
 

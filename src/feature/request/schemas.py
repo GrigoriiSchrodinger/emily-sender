@@ -50,9 +50,13 @@ class DeletePostByQueue(PostBase):
     channel: str
     id_post: int
 
+class SelectBestNewsList(PostBase):
+    seed: str
+    text: str
+
 class SelectBestNews(PostBase):
-    send_news_list: str
-    queue_news_list: str
+    send_news_list: list[SelectBestNewsList]
+    queue_news_list: list[SelectBestNewsList]
 
 class SelectBestNewsResponse(PostBase):
     seed: str

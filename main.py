@@ -23,23 +23,25 @@ def main():
 
     last_news_send = [{"seed": news.seed, "text": news.text} for news in last_news_send.send]
     last_news_queue = [{"seed": news.seed, "text": news.text} for news in last_news_queue.queue]
+    if last_news_queue:
+        seed = gpt_handler.select_best_news(send_news_list=last_news_send, queue_news_list=last_news_queue)
+        logger.debug(f"Обработка seed: {seed}")
+        detail_by_seed = request_db.get_detail_by_seed(seed)
+        logger.debug(f"Детали для seed: {detail_by_seed}")
+        detail_by_seed_json = {
+            "content": detail_by_seed.content,
+            "channel": detail_by_seed.channel,
+            "id_post": detail_by_seed.id_post,
+            "outlinks": detail_by_seed.outlinks,
+            "seed": seed
+        }
+        redis.send_to_queue(queue_name="text_conversion", data=json.dumps(detail_by_seed_json))
+        logger.info(f"Отправлено в очередь text_conversion: {detail_by_seed_json}")
 
-    seed = gpt_handler.select_best_news(send_news_list=last_news_send, queue_news_list=last_news_queue)
-    logger.debug(f"Обработка seed: {seed}")
-    detail_by_seed = request_db.get_detail_by_seed(seed)
-    logger.debug(f"Детали для seed: {detail_by_seed}")
-    detail_by_seed_json = {
-        "content": detail_by_seed.content,
-        "channel": detail_by_seed.channel,
-        "id_post": detail_by_seed.id_post,
-        "outlinks": detail_by_seed.outlinks,
-        "seed": seed
-    }
-    redis.send_to_queue(queue_name="text_conversion", data=json.dumps(detail_by_seed_json))
-    logger.info(f"Отправлено в очередь text_conversion: {detail_by_seed_json}")
-
-    request_db.delete_news_by_queue(channel=detail_by_seed.channel, id_post=detail_by_seed.id_post)
-    logger.debug(f"Удален пост: {detail_by_seed.channel}/{detail_by_seed.id_post}")
+        request_db.delete_news_by_queue(channel=detail_by_seed.channel, id_post=detail_by_seed.id_post)
+        logger.debug(f"Удален пост: {detail_by_seed.channel}/{detail_by_seed.id_post}")
+    else:
+        logger.debug(f"Очередь новостей пуста")
 
 
 def run_main(timer_event):

@@ -5,6 +5,7 @@ import threading
 
 import pytz
 
+from src.feature.check_news_relationship import check_news_relationship
 from src.logger import logger
 from src.service import redis, request_db, gpt_handler
 
@@ -29,16 +30,13 @@ def main():
             logger.debug(f"Обработка seed: {seed}")
             detail_by_seed = request_db.get_detail_by_seed(seed)
             logger.debug(f"Детали для seed: {detail_by_seed}")
-            detail_by_seed_json = {
-                "content": detail_by_seed.content,
-                "channel": detail_by_seed.channel,
-                "id_post": detail_by_seed.id_post,
-                "outlinks": detail_by_seed.outlinks,
-                "seed": seed
-            }
-            redis.send_to_queue(queue_name="text_conversion", data=json.dumps(detail_by_seed_json))
-            logger.info(f"Отправлено в очередь text_conversion: {detail_by_seed_json}")
-
+            new_post = gpt_handler.upgrade_news(text=detail_by_seed.content, links=detail_by_seed.outlinks)["text"]
+            check_news_relationship(current_news=detail_by_seed.content, seed=seed)
+            request_db.create_modified_news(
+                channel=detail_by_seed.channel,
+                id_post=detail_by_seed.id_post, text=new_post
+            )
+            redis.send_to_queue(queue_name="ForModer", data=json.dumps({"seed": seed}))
             request_db.delete_news_by_queue(channel=detail_by_seed.channel, id_post=detail_by_seed.id_post)
             logger.debug(f"Удален пост: {detail_by_seed.channel}/{detail_by_seed.id_post}")
         else:

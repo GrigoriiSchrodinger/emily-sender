@@ -4,7 +4,9 @@ import requests
 from pydantic import BaseModel, ValidationError
 
 from src.feature.request.schemas import DeletePostByQueue, PostSendNewsList, PostQueueList, DetailBySeedResponse, \
-    DetailBySeed, SelectBestNews, SelectBestNewsResponse, SelectBestNewsList
+    DetailBySeed, SelectBestNews, SelectBestNewsResponse, SelectBestNewsList, SelectRelationship, \
+    SelectRelationshipResponse, SendNewsRelationship, ModifiedPost, ImproveText, ImproveTextResponse, RelationshipNews, \
+    RelationshipNewsResponse
 from src.logger import logger
 from src.service_url import get_url_emily_database_handler, get_url_emily_gpt_handler
 
@@ -150,8 +152,32 @@ class RequestDataBase(RequestHandler):
         seed_req = DetailBySeed(
             seed=seed
         )
-        return self.__get__(endpoint='all-news/detail-by-seed/{seed}', path_params=seed_req,
-                            response_model=DetailBySeedResponse)
+        return self.__get__(
+            endpoint='all-news/detail-by-seed/{seed}',
+            path_params=seed_req,
+            response_model=DetailBySeedResponse
+        )
+
+    def __create_modified_news__(self, data: ModifiedPost):
+        return self.__post__(endpoint='modified-text/create', data=data)
+
+    def __create_relationship__(self, data: RelationshipNews) -> RelationshipNewsResponse:
+        return self.__post__(endpoint='all-news/create-relationship', data=data)
+
+    def create_relationship(self, seed_news: str, current_news: str):
+        data = RelationshipNews(
+            seed_news=seed_news,
+            related_new_seed=current_news
+        )
+        return self.__create_relationship__(data=data)
+
+    def create_modified_news(self, channel: str, id_post: int, text: str):
+        data = ModifiedPost(
+            channel=channel,
+            id_post=id_post,
+            text=text
+        )
+        return self.__create_modified_news__(data=data)
 
     def get_detail_by_seed(self, seed: str) -> DetailBySeedResponse:
         return self.__get_detail_by_seed__(seed=seed)[1]
@@ -177,6 +203,27 @@ class RequestGptHandler(RequestHandler):
 
     def __select_best_news__(self, data: SelectBestNews) -> SelectBestNewsResponse:
         return self.__post__(endpoint='text-handler/select-best-news', data=data)
+
+    def __upgrade_news__(self, data: ImproveText) -> ImproveTextResponse:
+        return self.__post__(endpoint='text-handler/improve', data=data)
+
+    def __select_relationship__(self, data: SelectRelationship) -> SelectRelationshipResponse:
+        req = self.__post__(endpoint='text-handler/select-relationship', data=data)
+        return req
+
+    def check_relationship(self, news_list: list[SendNewsRelationship], current_news: str) -> dict:
+        data = SelectRelationship(
+            news_list=news_list,
+            current_news=current_news
+        )
+        return self.__select_relationship__(data=data)
+
+    def upgrade_news(self, text: str, links: list) -> ImproveTextResponse:
+        data = ImproveText(
+            text=text,
+            links=links
+        )
+        return self.__upgrade_news__(data=data)
 
     def select_best_news(self, send_news_list: list[SelectBestNewsList], queue_news_list: list[SelectBestNewsList]) -> str:
         """
